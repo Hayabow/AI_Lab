@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>金融知識学習RPG</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>金融知識学習RPG</h1>
+        </header>
+
+        <!-- ゲーム開始画面 -->
+        <div id="start-screen" class="screen">
+            <div class="start-content">
+                <h2>ようこそ、金融知識学習RPGへ！</h2>
+                <p>このゲームでは、冒険を通じて金融の知識を学ぶことができます。</p>
+                <div class="intro-story">
+                    <h3>プロローグ</h3>
+                    <p>金融の世界に住むあなたは、経済の混乱を引き起こすモンスターたちと戦う冒険者として、この世界を救う使命を負っています。</p>
+                    <p>モンスターを倒すと、お金と「F券」という特別な報酬がもらえます。F券はエリアの経済情勢に応じて価値が変動するため、タイミングを見極めて武器や防具と交換することが重要です。</p>
+                    <p>また、モンスターは一定の確率で仲間になり、あなたのパーティを強化してくれます。</p>
+                </div>
+                <div class="input-group">
+                    <label for="player-name">あなたの名前:</label>
+                    <input type="text" id="player-name" placeholder="冒険者" maxlength="20">
+                </div>
+                <button onclick="startGame()" class="btn btn-primary">ゲーム開始</button>
+            </div>
+        </div>
+
+        <!-- メインゲーム画面 -->
+        <div id="game-screen" class="screen hidden">
+            <div class="game-header">
+                <div class="status-bar">
+                    <div class="status-item">
+                        <span class="label">エリア:</span>
+                        <span id="current-area">1</span>
+                    </div>
+                    <div class="status-item">
+                        <span class="label">所持金:</span>
+                        <span id="gold">0</span>G
+                    </div>
+                    <div class="status-item">
+                        <span class="label">F券:</span>
+                        <span id="f-tickets">0</span>枚
+                    </div>
+                    <div class="status-item">
+                        <span class="label">F券価値:</span>
+                        <span id="f-ticket-value">0</span>G
+                    </div>
+                    <div class="status-item">
+                        <span class="label">経済状況:</span>
+                        <span id="economy-condition">安定</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="game-content">
+                <div class="main-menu">
+                    <button onclick="showAdventure()" class="btn btn-action">冒険に出る</button>
+                    <button onclick="showShop()" class="btn btn-action">ショップ</button>
+                    <button onclick="showParty()" class="btn btn-action">パーティ確認</button>
+                    <button onclick="showEconomy()" class="btn btn-action">経済情勢</button>
+                    <button onclick="showFinancialKnowledge()" class="btn btn-action">金融知識</button>
+                </div>
+
+                <div id="game-panel" class="game-panel">
+                    <!-- コンテンツがここに動的に挿入される -->
+                </div>
+            </div>
+
+            <!-- 戦闘モーダル -->
+            <div id="battle-modal" class="modal hidden">
+                <div class="modal-content battle-modal-content" style="border-radius: 0; max-width: 100%; width: 100%; height: 100%; max-height: 100%; margin: 0; padding: 0;">
+                    <div class="battle-screen">
+                        <!-- 戦闘アリーナ（上部70%） -->
+                        <div class="battle-arena-section">
+                            <div class="battle-background">
+                                <!-- 敵エリア -->
+                                <div class="enemy-area">
+                                    <div id="enemy-container" class="enemy-container">
+                                        <!-- 敵がここに表示される -->
+                                    </div>
+                                </div>
+                                
+                                <!-- プレイヤーエリア -->
+                                <div class="player-area">
+                                    <div id="player-name-display" class="player-name-display">エイシー</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- コマンドインターフェース（下部30%） -->
+                        <div class="command-interface">
+                            <div class="command-grid">
+                                <button class="command-btn attack-btn" onclick="battleAction('attack')">
+                                    <div class="command-icon">⚔️</div>
+                                    <div class="command-text">こうげき</div>
+                                </button>
+                                <button class="command-btn spell-btn" onclick="showSpellMenu()">
+                                    <div class="command-icon">✨</div>
+                                    <div class="command-text">じゅもん</div>
+                                </button>
+                                <button class="command-btn item-btn" onclick="showItemMenu()">
+                                    <div class="command-icon">💊</div>
+                                    <div class="command-text">どうぐ</div>
+                                </button>
+                                <button class="command-btn defend-btn" onclick="battleAction('defend')">
+                                    <div class="command-icon">🛡️</div>
+                                    <div class="command-text">ぼうぎょ</div>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- 魔法選択モーダル -->
+                        <div id="spell-modal" class="spell-modal hidden">
+                            <div class="spell-menu">
+                                <h3>じゅもん</h3>
+                                <button class="spell-option" onclick="battleAction('spell', null, null, 'メラ')">メラ (MP:3)</button>
+                                <button class="spell-option" onclick="battleAction('spell', null, null, 'ギラ')">ギラ (MP:5)</button>
+                                <button class="spell-option" onclick="battleAction('spell', null, null, 'ホイミ')">ホイミ (MP:3)</button>
+                                <button class="spell-option" onclick="battleAction('spell', null, null, 'ベホイミ')">ベホイミ (MP:8)</button>
+                                <button class="spell-option" onclick="closeSpellMenu()">やめる</button>
+                            </div>
+                        </div>
+                        
+                        <!-- アイテム選択モーダル -->
+                        <div id="item-modal" class="item-modal hidden">
+                            <div class="item-menu">
+                                <h3>どうぐ</h3>
+                                <div id="item-list" class="item-list">
+                                    <!-- アイテムがここに表示される -->
+                                </div>
+                                <button class="item-option" onclick="closeItemMenu()">やめる</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ショップモーダル -->
+            <div id="shop-modal" class="modal hidden">
+                <div class="modal-content shop-modal-content">
+                    <div class="modal-header">
+                        <h2>🏪 ショップ</h2>
+                        <button class="close-modal" onclick="closeShopModal()">&times;</button>
+                    </div>
+                    <div id="shop-content" class="shop-content">
+                        <!-- ショップ内容がここに表示される -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- パーティ手放しモーダル -->
+            <div id="release-modal" class="modal hidden">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h2>パーティが満員です</h2>
+                        <button class="close-modal" onclick="closeReleaseModal()">&times;</button>
+                    </div>
+                    <div class="modal-body">
+                        <p>新しいモンスターを仲間に加えるには、誰かを手放す必要があります。</p>
+                        <div id="release-options" class="release-options">
+                            <!-- 手放す選択肢がここに表示される -->
+                        </div>
+                        <div style="margin-top: 20px; text-align: center;">
+                            <button class="btn btn-primary" onclick="confirmRelease()" id="confirm-release-btn" disabled>手放す</button>
+                            <button class="btn btn-secondary" onclick="closeReleaseModal()" style="margin-left: 10px;">キャンセル</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- メッセージ表示エリア -->
+        <div id="message-area" class="message-area"></div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/game.js') }}"></script>
+</body>
+</html>
+
